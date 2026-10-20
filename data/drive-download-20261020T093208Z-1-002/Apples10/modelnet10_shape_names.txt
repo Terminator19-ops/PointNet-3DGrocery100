@@ -1,0 +1,10 @@
+apple-fuji
+apple-golden-delicious
+apple-granny-smith
+apple-honeycrisp
+apple-evercrisp
+apple-pazazz
+apple-pink-lady
+apple-red-delicious
+apple-royal-gala
+apple-wild-twist
