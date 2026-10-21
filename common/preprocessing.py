@@ -57,6 +57,8 @@ def set_global_seed(seed: int = RANDOM_SEED) -> None:
         torch.manual_seed(seed)
         if torch.cuda.is_available():
             torch.cuda.manual_seed_all(seed)
+        if hasattr(torch, "xpu") and torch.xpu.is_available():
+            torch.xpu.manual_seed_all(seed)
     except ImportError:
         pass  # PyTorch not required for pure preprocessing
     logger.debug("Global seed set to %d", seed)

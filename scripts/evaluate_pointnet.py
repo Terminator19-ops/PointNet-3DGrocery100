@@ -16,6 +16,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from common.dataset import Grocery3DDataset, make_dataloader  # noqa: E402
+from common.device import choose_device  # noqa: E402
 from common.metrics import compute_all_metrics, confusion_matrix_np, per_class_accuracy  # noqa: E402
 from models.pointnet import PointNet  # noqa: E402
 
@@ -38,20 +39,6 @@ def parse_args() -> argparse.Namespace:
     if args.batch_size < 1 or args.num_workers < 0:
         parser.error("--batch-size must be >= 1 and --num-workers >= 0")
     return args
-
-
-def choose_device(requested: str) -> torch.device:
-    if requested == "auto":
-        if torch.cuda.is_available():
-            return torch.device("cuda")
-        if hasattr(torch, "xpu") and torch.xpu.is_available():
-            return torch.device("xpu")
-        return torch.device("cpu")
-    if requested == "cuda" and not torch.cuda.is_available():
-        raise RuntimeError("CUDA requested but unavailable")
-    if requested == "xpu" and not (hasattr(torch, "xpu") and torch.xpu.is_available()):
-        raise RuntimeError("XPU requested but unavailable in this PyTorch installation")
-    return torch.device(requested)
 
 
 def main() -> None:

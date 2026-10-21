@@ -26,6 +26,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from common.dataset import Grocery3DDataset, make_dataloader  # noqa: E402
+from common.device import choose_device, seed_device  # noqa: E402
 from common.metrics import accuracy, mean_class_accuracy  # noqa: E402
 from models.pointnet import PointNet, feature_transform_regularizer  # noqa: E402
 
@@ -67,24 +68,7 @@ def seed_everything(seed: int) -> None:
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
-    if torch.cuda.is_available():
-        torch.cuda.manual_seed_all(seed)
-    if hasattr(torch, "xpu") and torch.xpu.is_available():
-        torch.xpu.manual_seed_all(seed)
-
-
-def choose_device(requested: str) -> torch.device:
-    if requested == "auto":
-        if torch.cuda.is_available():
-            return torch.device("cuda")
-        if hasattr(torch, "xpu") and torch.xpu.is_available():
-            return torch.device("xpu")
-        return torch.device("cpu")
-    if requested == "cuda" and not torch.cuda.is_available():
-        raise RuntimeError("CUDA was requested but torch.cuda.is_available() is False")
-    if requested == "xpu" and not (hasattr(torch, "xpu") and torch.xpu.is_available()):
-        raise RuntimeError("XPU was requested but this PyTorch installation has no available XPU device")
-    return torch.device(requested)
+    seed_device(seed)
 
 
 def run_epoch(

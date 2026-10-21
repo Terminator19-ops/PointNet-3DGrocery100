@@ -1,4 +1,4 @@
- """
+"""
 common/visualization.py
 =======================
 Visualization utilities for 3DGrocery100 point clouds.
