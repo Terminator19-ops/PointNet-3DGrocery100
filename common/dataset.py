@@ -41,6 +41,11 @@ from common.preprocessing import (
     clean_points,
     set_global_seed,
 )
+from common.augmentation import (
+    AugmentationConfig,
+    augment_point_cloud,
+    BASELINE_CONFIG,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -148,6 +153,7 @@ class Grocery3DDataset(Dataset):
         n_points: int = N_POINTS,
         seed: int = RANDOM_SEED,
         metadata: bool = False,
+        augmentation: Optional[AugmentationConfig] = None,
     ) -> None:
         super().__init__()
 
@@ -164,6 +170,14 @@ class Grocery3DDataset(Dataset):
         self.n_points = n_points
         self.seed = seed
         self.metadata = metadata
+        
+        # Augmentation: only apply to training split, never to validation/test
+        self.augmentation = augmentation if split == "train" else None
+        if self.augmentation is not None and not self.augmentation.enabled:
+            self.augmentation = None
+        
+        # RNG for augmentations (seeded for reproducibility)
+        self._aug_rng = np.random.default_rng(seed + 12345) if self.augmentation else None
 
         # --- resolve paths ------------------------------------------------
         self.raw_root = Path(raw_root) if raw_root else _DEFAULT_RAW_ROOT
@@ -190,11 +204,12 @@ class Grocery3DDataset(Dataset):
             self._index: List[Dict] = json.load(fh)
 
         logger.info(
-            "Grocery3DDataset | split=%s | mode=%s | %d samples | %d classes",
+            "Grocery3DDataset | split=%s | mode=%s | %d samples | %d classes | aug=%s",
             split,
             mode,
             len(self._index),
             self.n_classes,
+            "enabled" if self.augmentation else "disabled",
         )
 
         # --- load .dat file into memory (large but fast for training) ------
@@ -265,6 +280,10 @@ class Grocery3DDataset(Dataset):
         # --- normalize XYZ ------------------------------------------------
         if self.apply_normalization:
             points = normalize_xyz(points)
+
+        # --- augmentation (training only) ---------------------------------
+        if self.augmentation is not None:
+            points = augment_point_cloud(points, self.augmentation, self._aug_rng)
 
         # --- select channels ----------------------------------------------
         points = select_channels(points, mode=self.mode)
